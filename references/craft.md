@@ -20,6 +20,13 @@ Default density: **4–7 elements**. Fewer for clean/minimal; more only for
 posters/UI/text-heavy layouts. ~60 elements physically place fine, but the
 2048-token cap is the real limit — budget tokens, not element count.
 
+**Counts inside a desc are unreliable.** "three coins in her hand" or "three
+lanterns" inside one element's desc renders as "some" — sub-element counting is
+the model's known frontier (verified in a 10-element stress test where every
+element placed correctly but small-item counts drifted). If an exact count
+matters, **promote each countable to its own element with its own bbox**;
+otherwise write quantities loosely ("a few", "a cluster of").
+
 ## bbox semantics (behavioral, not documented)
 
 - A bbox acts as **midpoint placement + approximate extent hint**, NOT a hard
