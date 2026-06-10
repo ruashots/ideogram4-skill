@@ -116,6 +116,12 @@ re-denoise toward the caption:
   large dark/light priors. For face-faithful work on a specific person, use a
   character LoRA (Ideogram 4 LoRAs exist; needs LoraLoaderModelOnly in the
   graph) or an identity-conditioned model — text+latent alone won't do it.
+- **Don't expect flat backgrounds to repaint preferentially.** Verified failure:
+  portrait on a plain gray studio backdrop, captioned into a spaceship cockpit —
+  at denoise 0.6 the gray backdrop SURVIVED almost untouched (large uniform
+  regions are strong latent structure too) while the face still drifted; the
+  scene only formed at 0.75 with identity mostly gone. Scene-swap-around-a-person
+  has no good denoise value — it's a LoRA/instruct-edit job, full stop.
 
 ## Iteration loop
 
