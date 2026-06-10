@@ -72,4 +72,10 @@ shapes for scale.
 |---|---|---|
 | TURBO | 12 | fast drafts, composition checks |
 | DEFAULT | 20–28 | good everyday quality |
-| QUALITY | 48 | final renders |
+| QUALITY | 48 | final renders, **anything with rendered text** |
+
+**Text-heavy images → use `--preset quality` (48 steps).** Glyph fidelity is
+fine detail; extra steps buy it. Verified: a poster with a chrome display title
+plus a small comma-bearing Spanish tagline rendered both flawlessly at 48 steps
+(832×1216). Pair with the text rules above: short strings, generous bboxes,
+high contrast, one `text` element per block.

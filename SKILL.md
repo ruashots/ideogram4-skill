@@ -64,7 +64,7 @@ If the request is for commercial/client work, say so and stop.
 | i2i ignores "change X" instructions | No edit mode — describe the **full target image**; input only seeds the latent. |
 | i2i ignores painted masks | Masks aren't wired in this pipeline; inpainting silently no-ops. |
 | Identical results every run | Seed is fixed; pass a new `--seed` or omit for random. |
-| Text renders garbled | Shrink the string, enlarge its bbox, raise contrast in `desc`. |
+| Text renders garbled | Shrink the string, enlarge its bbox, raise contrast in `desc` — and use `--preset quality` (48 steps); glyph fidelity needs the extra steps. |
 | Caption truncated / quality collapse | Over the 2048-token cap — cut elements/desc fat. |
 
 ## Plumbing facts (for debugging)
