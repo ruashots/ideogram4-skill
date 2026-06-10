@@ -109,6 +109,13 @@ re-denoise toward the caption:
 - `denoise` is the strength knob: **0.35–0.45** subtle restyle · **0.55–0.65**
   real changes, composition kept · **0.75+** mostly new image guided by old layout.
 - Masks/inpainting: not supported in this graph — a painted mask is silently ignored.
+- **Identity drifts.** i2i preserves composition and rough likeness, but a real
+  person's face is NOT faithfully kept at denoise ≥0.5 (verified: 8-view
+  turnaround sheet at 0.55 → "same family, different person"). Targeted region
+  edits (e.g. recolor one garment) also only partially take — the latent fights
+  large dark/light priors. For face-faithful work on a specific person, use a
+  character LoRA (Ideogram 4 LoRAs exist; needs LoraLoaderModelOnly in the
+  graph) or an identity-conditioned model — text+latent alone won't do it.
 
 ## Iteration loop
 
