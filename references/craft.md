@@ -1,0 +1,111 @@
+# Composition craft — what makes Ideogram 4 captions actually good
+
+Schema correctness is table stakes (see `schema.md`). Image quality comes from
+the decisions below. Sources: official magic-prompt `v1.txt`, community
+behavioral research, and dissected production workflows.
+
+## Element granularity — the #1 LLM mistake
+
+**Single subject = single element.** One person, animal, vehicle, building,
+plant, machine = ONE `obj`. Parts (limbs, wheels, windows, petals) are
+attributes inside that element's `desc`, never separate elements.
+
+- FORBIDDEN: a bee as 8 elements (thorax/wings/legs…), a person as 7, a car as 6.
+- Multiple distinct subjects (a person AND a dog; three runners) → one element each.
+- **Transparent enclosure + featured contents = ONE element** (snow globe, aquarium, display case).
+- **Configured parts + revealed interior = ONE element** (car with open door, machine with raised hood).
+- Test: *part-of-one-thing → that thing's desc. Separate thing → its own element.*
+
+Default density: **4–7 elements**. Fewer for clean/minimal; more only for
+posters/UI/text-heavy layouts. ~60 elements physically place fine, but the
+2048-token cap is the real limit — budget tokens, not element count.
+
+## bbox semantics (behavioral, not documented)
+
+- A bbox acts as **midpoint placement + approximate extent hint**, NOT a hard
+  stretch-to-fit box. The model centers the subject there at roughly that scale;
+  it won't distort to fill the box exactly.
+- **Element array order = z-order.** Earlier ≈ farther/behind, later ≈ nearer/in
+  front. Order background-ish elements first, foreground last.
+- bbox is optional — omit it when placement doesn't matter and the model
+  composes freely (often better for single-subject images).
+- Make bboxes agree with the prose: "on the left" → low x values; "foreground" →
+  larger box, lower in frame; "wide shot" → smaller subject box, more
+  background; "close-up/macro" → box fills most of the canvas.
+
+### Placement cheat table (0–1000, [y1,x1,y2,x2])
+
+| Intent | bbox |
+|---|---|
+| Centered portrait close-up | `[40,220,960,780]` |
+| Centered medium shot | `[120,250,980,750]` |
+| Full body centered | `[80,320,980,680]` |
+| Subject on left / right third | `[100,80,950,480]` / `[100,520,950,930]` |
+| Two characters facing each other | L `[120,80,950,460]` + R `[120,540,950,920]` |
+| Product centered | `[180,240,850,760]` |
+| Landscape horizon band | `[380,0,520,1000]` |
+| Title text top / bottom center | `[40,120,190,880]` / `[780,120,940,880]` |
+| Small logo top corner | `[30,40,130,180]` |
+| Foreground object across bottom | `[720,0,1000,1000]` |
+
+Adapt for the actual aspect ratio — these assume roughly square; in 9:16 stretch
+y-ranges, in 16:9 stretch x-ranges.
+
+## desc checklists (what to actually describe)
+
+- **Characters**: identity, pose, body orientation, expression, gaze, action,
+  clothing + materials, hair, accessories, relationship to camera and to other
+  elements, lighting interaction.
+- **Products**: type, shape, material, surface finish, angle, reflections,
+  scale, presentation.
+- **Environment pieces**: position in frame, size, material, texture, light
+  interaction, perspective.
+- **Effects** (fire, magic, neon): shape, color, intensity, transparency, glow,
+  direction, how it lights nearby surfaces.
+- **Text elements**: exact string in `text` (verbatim, preserve the user's
+  casing/characters); `desc` covers font style/weight/size/color/placement/
+  effects. Big readable text wants a big bbox + high contrast. No text elements
+  unless the image type needs them or the user asked. "no text" → zero text elements.
+
+## Palettes
+
+- Global: 3–8 colors normally (16 max for complex scenes). Include background,
+  subject, highlight, shadow, accent. Dark scene → include the darks.
+- Per element: 2–5 colors describing THAT element, harmonizing with the global.
+- Uppercase `#RRGGBB` only.
+
+## Negative constraints
+
+No `negative_prompt` key exists. Fold exclusions into prose naturally:
+"a clean polished sword, no blood or gore visible" / "clean minimal studio
+background, no clutter, no extra objects".
+
+## Block cards & safety
+
+A gray "Image blocked by safety filter" card is returned for NSFW — but the
+**same card appears for schema/format errors**, and false-positive rates are
+officially higher for non-JSON/malformed prompts. So when you see a block:
+1) `validate.py` the caption, 2) check it's minified proper JSON, 3) only then
+suspect actual content filtering. The open local weights still contain this
+baked-in filter; a low refusal-card rate is normal for borderline content.
+
+## img2img (latent)
+
+There is no edit-instruction mode. i2i = VAE-encode the input image and
+re-denoise toward the caption:
+
+- The caption must describe the **full desired final image** (same format as
+  t2i), NOT the change ("make the hat red" fails; describe the person *with*
+  the red hat and everything else you want kept).
+- The input image contributes structure only through the latent; **the LLM/text
+  side never sees it.** You must describe what's in it that should survive.
+- `denoise` is the strength knob: **0.35–0.45** subtle restyle · **0.55–0.65**
+  real changes, composition kept · **0.75+** mostly new image guided by old layout.
+- Masks/inpainting: not supported in this graph — a painted mask is silently ignored.
+
+## Iteration loop
+
+Generate → **read the output image** → compare against the caption element by
+element → fix the caption (placement? missing element? palette drift?) →
+re-validate → regenerate. Keep the seed fixed while iterating composition;
+randomize once composition is right and you're fishing for the best take.
