@@ -129,3 +129,30 @@ Generate → **read the output image** → compare against the caption element b
 element → fix the caption (placement? missing element? palette drift?) →
 re-validate → regenerate. Keep the seed fixed while iterating composition;
 randomize once composition is right and you're fishing for the best take.
+
+
+## The "football" curse (hard-won, three strikes)
+
+In any US-adjacent or northern-Mexico context (norteño, carne asada, backyard,
+tailgate vibes), the words "football" / "football jersey" / "football scarf"
+resolve AMERICAN: pigskin balls, shoulder-pad jerseys. Struck three times in
+one day (eagle poster ball, barrio kid ball, norteño/asada jerseys).
+RULE: for fútbol content always write "classic black-and-white hexagonal-panel
+soccer ball", "short-sleeved soccer kit jersey, no shoulder pads", "soccer fan
+scarf" — and put `american football, rugby ball` in the negative prompt.
+
+
+## Pose control via limb-bbox decomposition (discovered 2026-06-11)
+
+Pose WORDS don't move limbs reliably ("knee bent", "legs scissored" get averaged
+away); bbox GEOMETRY does. For animation frames / distinct poses of the same
+character, split each figure into 2+ elements — torso+head box and a legs box —
+and encode the pose in the BOX SHAPES: a wide+low legs box forces a stride,
+a narrow legs box forces legs-together, raising the torso box ~40/1000 creates
+the walk bounce. Five same-size single-element figures in bands = five near
+-identical poses (failed walk cycle); three figures with torso/legs boxes shaped
+per phase = a real contact/passing/contact cycle (worked first try).
+Fewer, larger frames beat many small ones for pose fidelity. Character identity
+stays consistent across frames within one generation; style may still drift
+from a separately generated reference (see the football curse note: every
+generation is its own casting call).
